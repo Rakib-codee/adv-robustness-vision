@@ -1,0 +1,9 @@
+name: deit_tiny_std
+model: deit_tiny
+model_args: {pretrained: true}
+optimizer: adamw
+lr: 0.0005        # peak LR for OneCycle; lower (1e-4) if the loss diverges
+weight_decay: 0.05
+batch_size: 128
+epochs: 10
+wandb_project: adv-robustness-vision

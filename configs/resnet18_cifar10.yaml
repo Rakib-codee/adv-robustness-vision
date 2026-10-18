@@ -1,0 +1,8 @@
+name: resnet18_std
+model: resnet18
+optimizer: sgd
+lr: 0.1
+weight_decay: 0.0005
+batch_size: 128
+epochs: 30        # raise to 100 only if time allows; 30 epochs of OneCycle reaches ~94%
+wandb_project: adv-robustness-vision
