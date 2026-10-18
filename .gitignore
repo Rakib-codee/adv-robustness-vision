@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+.ipynb_checkpoints/
+data/
+checkpoints/
+wandb/
+*.pt
+*.pth
+.DS_Store
+# keep small result tables/figures tracked:
+!results/.gitkeep

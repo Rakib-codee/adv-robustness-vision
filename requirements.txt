@@ -1,0 +1,14 @@
+torch
+torchvision
+timm
+torchattacks
+autoattack @ git+https://github.com/fra31/auto-attack
+grad-cam
+wandb
+pyyaml
+numpy
+pandas
+matplotlib
+scikit-image
+gradio
+pytest

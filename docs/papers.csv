@@ -1,0 +1,11 @@
+Paper,Authors,Key Takeaway,Link,Status,Topic,Year
+Explaining and Harnessing Adversarial Examples (FGSM),"Goodfellow, Shlens, Szegedy",,https://arxiv.org/abs/1412.6572,To Read,Attack,2015
+Benchmarking Neural Network Robustness to Common Corruptions and Perturbations (CIFAR-10-C),"Hendrycks, Dietterich",,https://arxiv.org/abs/1903.12261,To Read,Evaluation,2019
+Are Transformers More Robust Than CNNs?,Bai et al.,,https://arxiv.org/abs/2111.05464,To Read,CNN vs ViT,2021
+Intriguing properties of neural networks,Szegedy et al.,,https://arxiv.org/abs/1312.6199,To Read,Foundations,2014
+Fast is better than free: Revisiting adversarial training,"Wong, Rice, Kolter",,https://arxiv.org/abs/2001.03994,To Read,Defense,2020
+Robustness May Be at Odds with Accuracy,Tsipras et al.,,https://arxiv.org/abs/1805.12152,To Read,Trade-off,2019
+Theoretically Principled Trade-off between Robustness and Accuracy (TRADES),Zhang et al.,,https://arxiv.org/abs/1901.08573,To Read,Defense,2019
+Towards Deep Learning Models Resistant to Adversarial Attacks (PGD),Madry et al.,,https://arxiv.org/abs/1706.06083,To Read,Defense,2018
+Towards Evaluating the Robustness of Neural Networks (C&W),"Carlini, Wagner",,https://arxiv.org/abs/1608.04644,To Read,Attack,2017
+Reliable evaluation of adversarial robustness with an ensemble of diverse parameter-free attacks (AutoAttack),"Croce, Hein",,https://arxiv.org/abs/2003.01690,To Read,Evaluation,2020
