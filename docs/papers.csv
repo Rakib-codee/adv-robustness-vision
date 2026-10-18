@@ -1,5 +1,5 @@
 Paper,Authors,Key Takeaway,Link,Status,Topic,Year
-Explaining and Harnessing Adversarial Examples (FGSM),"Goodfellow, Shlens, Szegedy",,https://arxiv.org/abs/1412.6572,To Read,Attack,2015
+Explaining and Harnessing Adversarial Examples (FGSM),"Goodfellow, Shlens, Szegedy","FGSM: one-step attack x_adv = x + eps*sign(grad of loss wrt x). Argues adversarial examples come from models being too linear in high dimensions (not nonlinearity or overfitting), so tiny per-pixel changes add up. Adversarial examples transfer across models because they learn similar linear directions. Mixing clean and FGSM examples in training (alpha=0.5) regularizes and cuts FGSM error from 89.4% to 17.9% on MNIST. Ensembles and random noise do not help.",https://arxiv.org/abs/1412.6572,Done,Attack,2015
 Benchmarking Neural Network Robustness to Common Corruptions and Perturbations (CIFAR-10-C),"Hendrycks, Dietterich",,https://arxiv.org/abs/1903.12261,To Read,Evaluation,2019
 Are Transformers More Robust Than CNNs?,Bai et al.,,https://arxiv.org/abs/2111.05464,To Read,CNN vs ViT,2021
 Intriguing properties of neural networks,Szegedy et al.,,https://arxiv.org/abs/1312.6199,To Read,Foundations,2014
