@@ -1,0 +1,10 @@
+model,attack,eps_255,n,acc,seed,git
+deit_tiny_std,clean,0,1000,0.96,0,fe85e29
+deit_tiny_std,fgsm,2,1000,0.388,0,fe85e29
+deit_tiny_std,fgsm,4,1000,0.231,0,fe85e29
+deit_tiny_std,fgsm,8,1000,0.174,0,fe85e29
+deit_tiny_std,fgsm,16,1000,0.145,0,fe85e29
+deit_tiny_std,pgd,2,1000,0.101,0,fe85e29
+deit_tiny_std,pgd,4,1000,0.004,0,fe85e29
+deit_tiny_std,pgd,8,1000,0.0,0,fe85e29
+deit_tiny_std,pgd,16,1000,0.0,0,fe85e29

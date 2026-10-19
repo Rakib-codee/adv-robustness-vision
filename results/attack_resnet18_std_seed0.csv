@@ -1,0 +1,10 @@
+model,attack,eps_255,n,acc,seed,git
+resnet18_std,clean,0,1000,0.943,0,fe85e29
+resnet18_std,fgsm,2,1000,0.33,0,fe85e29
+resnet18_std,fgsm,4,1000,0.193,0,fe85e29
+resnet18_std,fgsm,8,1000,0.131,0,fe85e29
+resnet18_std,fgsm,16,1000,0.097,0,fe85e29
+resnet18_std,pgd,2,1000,0.048,0,fe85e29
+resnet18_std,pgd,4,1000,0.001,0,fe85e29
+resnet18_std,pgd,8,1000,0.0,0,fe85e29
+resnet18_std,pgd,16,1000,0.0,0,fe85e29
