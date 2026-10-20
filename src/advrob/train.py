@@ -10,6 +10,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
+from .adv import defense_loss, quick_robust_acc
 from .data import get_cifar10
 from .models import build_model
 from .utils import AverageMeter, git_hash, load_config, set_seed
@@ -56,13 +57,16 @@ def main():
     epochs = cfg["epochs"]
     sched = torch.optim.lr_scheduler.OneCycleLR(
         opt, max_lr=cfg["lr"], total_steps=epochs * len(train_loader))
-    loss_fn = nn.CrossEntropyLoss()
+    defense = cfg.get("defense", "standard")
+    xq, yq = next(iter(test_loader))   # fixed first test batch for the per-epoch robust check
+    xq, yq = xq[:500].to(device), yq[:500].to(device)
 
-    start_epoch = 0
+    start_epoch, wandb_id = 0, None
     if last.exists():  # resume after a Kaggle/Colab timeout
         state = torch.load(last, map_location=device)
         model.load_state_dict(state["model"]); opt.load_state_dict(state["opt"])
         sched.load_state_dict(state["sched"]); start_epoch = state["epoch"] + 1
+        wandb_id = state.get("wandb_id")
         print(f"resumed from epoch {start_epoch}")
 
     wb = None
@@ -70,8 +74,9 @@ def main():
         try:
             import wandb
             wb = wandb.init(project=cfg.get("wandb_project", "adv-robustness-vision"),
-                            name=run_name, config={**cfg, "seed": args.seed, "git": git_hash()},
-                            id=run_name, resume="allow")
+                            name=run_name, id=wandb_id, resume="allow",
+                            config={**cfg, "seed": args.seed, "git": git_hash()})
+            wandb_id = wb.id
         except Exception as e:  # never let logging kill a training run
             print("wandb disabled:", e)
 
@@ -80,20 +85,22 @@ def main():
         meter, t0 = AverageMeter(), time.time()
         for x, y in train_loader:
             x, y = x.to(device), y.to(device)
-            loss = loss_fn(model(x), y)
+            loss = defense_loss(model, x, y, cfg)
             opt.zero_grad(set_to_none=True)
             loss.backward()
             opt.step(); sched.step()
             meter.update(loss.item(), y.numel())
         acc = evaluate(model, test_loader, device)
+        rob = quick_robust_acc(model, xq, yq) if defense != "standard" else float("nan")
         sec = time.time() - t0
-        print(f"epoch {epoch+1}/{epochs} loss {meter.avg:.4f} clean_acc {acc:.4f} {sec:.0f}s")
+        print(f"epoch {epoch+1}/{epochs} loss {meter.avg:.4f} clean_acc {acc:.4f} "
+              f"pgd10_acc(500) {rob:.4f} {sec:.0f}s")
         if wb:
             wb.log({"epoch": epoch + 1, "train_loss": meter.avg, "clean_acc": acc,
-                    "epoch_seconds": sec})
+                    "pgd10_acc_500": rob, "epoch_seconds": sec})
         torch.save({"model": model.state_dict(), "opt": opt.state_dict(),
                     "sched": sched.state_dict(), "epoch": epoch, "cfg": cfg,
-                    "seed": args.seed, "git": git_hash()}, last)
+                    "seed": args.seed, "git": git_hash(), "wandb_id": wandb_id}, last)
 
     torch.save({"model": model.state_dict(), "cfg": cfg, "seed": args.seed,
                 "git": git_hash(), "clean_acc": acc}, ckpt_dir / "final.pt")

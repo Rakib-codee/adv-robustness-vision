@@ -1,0 +1,11 @@
+name: resnet18_fgsm_at
+model: resnet18
+defense: fgsm_at       # Wong et al. 2020: FGSM + random start
+eps_255: 8
+alpha_255: 10          # 1.25 * eps
+optimizer: sgd
+lr: 0.1
+weight_decay: 0.0005
+batch_size: 128
+epochs: 30
+wandb_project: adv-robustness-vision

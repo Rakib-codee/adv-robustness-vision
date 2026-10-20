@@ -1,0 +1,12 @@
+name: resnet18_pgd_at
+model: resnet18
+defense: pgd_at        # Madry et al. 2018
+eps_255: 8
+alpha_255: 2
+steps: 7               # training steps; evaluation uses PGD-20 / AutoAttack
+optimizer: sgd
+lr: 0.1
+weight_decay: 0.0005
+batch_size: 128
+epochs: 30
+wandb_project: adv-robustness-vision
