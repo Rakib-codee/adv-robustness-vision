@@ -1,0 +1,13 @@
+name: resnet18_trades_b6
+model: resnet18
+defense: trades        # Zhang et al. 2019
+eps_255: 8
+alpha_255: 2
+steps: 10
+beta: 6.0              # also run beta=1 via  --set beta=1 name=resnet18_trades_b1
+optimizer: sgd
+lr: 0.1
+weight_decay: 0.0005
+batch_size: 128
+epochs: 30
+wandb_project: adv-robustness-vision
