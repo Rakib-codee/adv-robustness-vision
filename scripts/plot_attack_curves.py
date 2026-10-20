@@ -9,8 +9,12 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-COLORS = {"resnet18_std": "#2a78d6", "deit_tiny_std": "#eb6834"}   # categorical slots 1, 2
-LABELS = {"resnet18_std": "ResNet-18", "deit_tiny_std": "DeiT-Tiny"}
+ORDER = ["resnet18_std", "deit_tiny_std", "resnet18_fgsm_at", "resnet18_pgd_at"]
+COLORS = {"resnet18_std": "#2a78d6", "deit_tiny_std": "#eb6834",        # categorical slots 1-4
+          "resnet18_fgsm_at": "#1baf7a", "resnet18_pgd_at": "#eda100"}
+MARKERS = {"resnet18_std": "o", "deit_tiny_std": "s", "resnet18_fgsm_at": "^", "resnet18_pgd_at": "D"}
+LABELS = {"resnet18_std": "ResNet-18 standard", "deit_tiny_std": "DeiT-Tiny standard",
+          "resnet18_fgsm_at": "ResNet-18 FGSM-AT", "resnet18_pgd_at": "ResNet-18 PGD-AT"}
 INK, MUTED, GRID = "#0b0b0b", "#52514e", "#e4e3df"
 
 data = defaultdict(dict)  # data[model][(attack, eps)] = acc
@@ -22,19 +26,19 @@ for path in sorted(glob.glob("results/attack_*.csv")):
 fig, axes = plt.subplots(1, 2, figsize=(9.6, 4.2), sharey=True)
 for ax, attack, title in zip(axes, ["fgsm", "pgd"], ["FGSM (1 step)", "PGD-20"]):
     ends = []
-    for model, d in data.items():
+    for model in [m for m in ORDER if m in data]:
+        d = data[model]
         eps = [0] + sorted(e for (a, e) in d if a == attack)
         acc = [d[("clean", 0)]] + [d[(attack, e)] for e in eps[1:]]
-        ax.plot(eps, acc, color=COLORS[model], lw=2, marker="o", ms=6,
+        ax.plot(eps, acc, color=COLORS[model], lw=2, marker=MARKERS[model], ms=6.5,
                 mfc=COLORS[model], mec="white", mew=1.5, label=LABELS[model], zorder=3)
         ends.append((model, eps[-1], acc[-1]))
-    if len({round(a, 1) for _, _, a in ends}) == 1:      # identical end values: label once
-        ax.annotate(f"{ends[0][2]:.1f}% (both)", (ends[0][1], ends[0][2]), xytext=(-4, 12),
-                    textcoords="offset points", ha="right", fontsize=9, color=INK)
-    else:
-        for _, x, a in ends:
+    last = None                                          # label end values, skip ones within 4 points
+    for _, x, a in sorted(ends, key=lambda t: -t[2]):
+        if last is None or last - a >= 4:
             ax.annotate(f"{a:.1f}%", (x, a), xytext=(8, 0), textcoords="offset points",
                         va="center", fontsize=9, color=INK)
+            last = a
     ax.set_title(title, loc="left", fontsize=11, color=INK, fontweight="bold")
     ax.set_xticks([0, 2, 4, 8, 16])
     ax.set_xticklabels(["0\n(clean)", "2", "4", "8", "16"])
@@ -48,8 +52,8 @@ for ax, attack, title in zip(axes, ["fgsm", "pgd"], ["FGSM (1 step)", "PGD-20"])
     ax.spines["bottom"].set_color(MUTED)
     ax.tick_params(colors=MUTED, labelsize=9, length=0)
 axes[0].set_ylabel("Accuracy (%)", fontsize=9, color=MUTED)
-axes[1].legend(frameon=False, fontsize=9, loc="upper right", labelcolor=INK)
-fig.suptitle("Standard models collapse under PGD: 0% at epsilon = 8/255 for both",
+axes[1].legend(frameon=False, fontsize=8.5, loc="upper right", labelcolor=INK)
+fig.suptitle("Adversarial training lifts PGD-20 accuracy at eps 8/255 from 0% to 45%",
              x=0.01, ha="left", fontsize=12.5, color=INK, fontweight="bold")
 fig.text(0.01, 0.01, f"CIFAR-10, first {n} test images, seed 0. Dashed line = main epsilon 8/255.",
          fontsize=8, color=MUTED)
