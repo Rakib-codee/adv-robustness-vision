@@ -1,0 +1,10 @@
+model,attack,eps_255,n,acc,seed,git
+resnet18_trades_b6,clean,0,1000,0.803,0,2f646aa
+resnet18_trades_b6,fgsm,2,1000,0.748,0,2f646aa
+resnet18_trades_b6,fgsm,4,1000,0.68,0,2f646aa
+resnet18_trades_b6,fgsm,8,1000,0.555,0,2f646aa
+resnet18_trades_b6,fgsm,16,1000,0.35,0,2f646aa
+resnet18_trades_b6,pgd,2,1000,0.746,0,2f646aa
+resnet18_trades_b6,pgd,4,1000,0.671,0,2f646aa
+resnet18_trades_b6,pgd,8,1000,0.517,0,2f646aa
+resnet18_trades_b6,pgd,16,1000,0.228,0,2f646aa
