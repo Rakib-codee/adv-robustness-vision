@@ -7,3 +7,4 @@
 | 2026-10-19 | deit_tiny standard, seed 0 | 5 | 202 | 96.44% |
 | 2026-10-20 | resnet18 FGSM-AT, seed 0 | 30 | 77 | 83.92% clean, 42.6% PGD-10 (500 img) |
 | 2026-10-20 | resnet18 PGD-AT attack_eval (n=1000) | - | 12 s per eps | 50.6% PGD-20 @ 8/255 |
+| 2026-10-22 | resnet18 TRADES β=6, seed 0 | 30 | 361 | 80.3% clean, 51.7% PGD-20 @ 8/255 (n=1000) |
