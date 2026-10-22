@@ -39,22 +39,28 @@ rows, grid = [], {}
 for label, art in specs:
     model, _ = load_model(art, device=device)
     atk = torchattacks.PGD(model, eps=eps, alpha=2.5 * eps / 20, steps=20, random_start=True)
-    corrs, ious, vis = [], [], {}
+    corrs, ious, corrs_p, ious_p, vis = [], [], [], [], {}
     for bi, (x, y) in enumerate(batches):
         x, y = x.to(device), y.to(device)
         x_adv = atk(x, y)
         c_clean, p_clean = gradcam(model, x)
-        c_adv, p_adv = gradcam(model, x_adv)
-        corr, iou = cam_similarity(c_clean, c_adv)
+        c_adv, p_adv = gradcam(model, x_adv)                       # CAM of the class predicted on x_adv
+        c_adv_fix, _ = gradcam(model, x_adv, cls=p_clean)          # CAM of the SAME class as on clean x
+        corr, iou = cam_similarity(c_clean, c_adv_fix)
+        corr_p, iou_p = cam_similarity(c_clean, c_adv)
         corrs.append(corr.cpu()); ious.append(iou.cpu())
+        corrs_p.append(corr_p.cpu()); ious_p.append(iou_p.cpu())
         for i in show:
             if bi * 100 <= i < (bi + 1) * 100:
                 j = i - bi * 100
                 vis[i] = (x[j].cpu(), c_clean[j].cpu(), x_adv[j].cpu(), c_adv[j].cpu(),
                           p_clean[j].item(), p_adv[j].item())
     corr, iou = torch.cat(corrs), torch.cat(ious)
-    rows.append(dict(model=label, eps_255=args.eps, n=args.n, cam_corr=round(corr.mean().item(), 4),
-                     cam_top20_iou=round(iou.mean().item(), 4)))
+    corr_p, iou_p = torch.cat(corrs_p), torch.cat(ious_p)
+    rows.append(dict(model=label, eps_255=args.eps, n=args.n,
+                     cam_corr=round(corr.mean().item(), 4), cam_top20_iou=round(iou.mean().item(), 4),
+                     cam_corr_predclass=round(corr_p.mean().item(), 4),
+                     cam_top20_iou_predclass=round(iou_p.mean().item(), 4)))
     print(rows[-1])
     grid[label] = vis
 
