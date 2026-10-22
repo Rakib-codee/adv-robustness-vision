@@ -1,4 +1,7 @@
-"""Gradio demo: attack 4 CIFAR-10 ResNet-18 models (standard / FGSM-AT / PGD-AT / TRADES) with FGSM or PGD.
+"""Gradio demo: attack 4 CIFAR-10 ResNet-18 models (standard / FGSM-AT /
+PGD-AT / TRADES) with FGSM or PGD and watch their predictions and Grad-CAM
+maps change. The hosted version of this demo is the Streamlit app
+(streamlit_app.py); this Gradio variant is kept for local/HF-PRO use.
 
 Run locally:  python demo/app.py   (needs torch, torchvision, gradio, matplotlib, pillow)
 Checkpoints are expected in demo/checkpoints/<name>.pt with
@@ -14,97 +17,30 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-import torch.nn.functional as F
 from PIL import Image
 
-from models import build_model
+from attack import (CLASSES, MODEL_FILES, available_labels, ensure_checkpoints,
+                    fgsm, get_model, gradcam, pgd, predict, to_tensor)
 
 HERE = Path(__file__).parent
-CLASSES = ["plane", "car", "bird", "cat", "deer", "dog", "frog", "horse", "ship", "truck"]
-MODEL_FILES = [("Standard", "resnet18_std"), ("FGSM-AT", "resnet18_fgsm_at"),
-               ("PGD-AT", "resnet18_pgd_at"), ("TRADES", "resnet18_trades_b6")]
-
-
-def load_models():
-    models = {}
-    for label, key in MODEL_FILES:
-        path = HERE / "checkpoints" / f"{key}.pt"
-        if not path.exists():
-            print("missing checkpoint:", path)
-            continue
-        ck = torch.load(path, map_location="cpu", weights_only=False)
-        cfg = ck["cfg"]
-        m = build_model(cfg["model"], **dict(cfg.get("model_args", {})))
-        m.load_state_dict(ck["model"])
-        models[label] = m.eval()
-    return models
-
-
-MODELS = load_models()
-
-
-def to_tensor(img):
-    """Centre-crop to a square, resize to 32x32, scale to [0, 1]. Models normalise internally."""
-    img = img.convert("RGB")
-    w, h = img.size
-    s = min(w, h)
-    left, top = (w - s) // 2, (h - s) // 2
-    img = img.crop((left, top, left + s, top + s)).resize((32, 32), Image.BICUBIC)
-    return torch.from_numpy(np.asarray(img).copy()).float().div(255).permute(2, 0, 1).unsqueeze(0)
-
-
-def fgsm(model, x, y, eps):
-    x = x.clone().requires_grad_(True)
-    grad, = torch.autograd.grad(F.cross_entropy(model(x), y), x)
-    return (x + eps * grad.sign()).clamp(0, 1).detach()
-
-
-def pgd(model, x, y, eps, steps=10):
-    alpha = 2.5 * eps / steps
-    xa = (x + torch.empty_like(x).uniform_(-eps, eps)).clamp(0, 1)
-    for _ in range(steps):
-        xa = xa.detach().requires_grad_(True)
-        grad, = torch.autograd.grad(F.cross_entropy(model(xa), y), xa)
-        xa = xa.detach() + alpha * grad.sign()
-        xa = torch.min(torch.max(xa, x - eps), x + eps).clamp(0, 1)
-    return xa.detach()
-
-
-@torch.no_grad()
-def predict(model, x):
-    p = F.softmax(model(x), 1)[0]
-    c = int(p.argmax())
-    return c, float(p[c])
-
-
-def gradcam(model, x, cls):
-    """Grad-CAM on ResNet layer4 for class `cls`; returns a (32, 32) map in [0, 1]."""
-    store = {}
-    hook = model.net.layer4.register_forward_hook(lambda m, i, o: store.__setitem__("a", o))
-    with torch.enable_grad():
-        logits = model(x)
-        act = store["a"]
-        grad, = torch.autograd.grad(logits[0, cls], act)
-    hook.remove()
-    w = grad.mean(dim=(2, 3), keepdim=True)
-    cam = F.relu((w * act).sum(1, keepdim=True))
-    cam = F.interpolate(cam, size=(32, 32), mode="bilinear", align_corners=False)[0, 0]
-    cam = (cam - cam.min()) / (cam.max() - cam.min() + 1e-8)
-    return cam.detach().numpy()
 
 
 def run(image, attack, eps255):
     if image is None:
         raise gr.Error("Upload an image or click an example first.")
-    if not MODELS:
+    labels = available_labels()
+    if not labels:
         raise gr.Error("No model checkpoints found in demo/checkpoints/.")
     x = to_tensor(image)
     eps = float(eps255) / 255
-    n = len(MODELS)
+    n = len(MODEL_FILES)
     fig, axes = plt.subplots(n, 4, figsize=(9, 2.4 * n), squeeze=False)
     heads = ["clean", "Grad-CAM (clean)", f"{attack} eps={int(eps255)}/255", "Grad-CAM (attacked)"]
     table = ["| Model | Clean prediction | After attack | Result |", "|---|---|---|---|"]
-    for r, (label, model) in enumerate(MODELS.items()):
+    for r, (label, _) in enumerate(MODEL_FILES):
+        model = get_model(label)
+        if model is None:
+            continue
         c0, p0 = predict(model, x)
         y = torch.tensor([c0])                      # untargeted: push away from the clean prediction
         if eps > 0:
