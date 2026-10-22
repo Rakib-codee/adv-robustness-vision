@@ -5,6 +5,7 @@ Checkpoints are expected in demo/checkpoints/<name>.pt with
 names: resnet18_std, resnet18_fgsm_at, resnet18_pgd_at, resnet18_trades_b6.
 """
 import io
+import os
 from pathlib import Path
 
 import gradio as gr
@@ -169,4 +170,4 @@ with gr.Blocks(title="Adversarial Robustness Demo") as demo:
             gr.Image(str(fig_path), label="Accuracy vs epsilon", interactive=False)
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(server_name="0.0.0.0", server_port=int(os.environ.get("PORT", 7860)))
