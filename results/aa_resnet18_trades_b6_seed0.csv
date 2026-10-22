@@ -1,0 +1,2 @@
+model,attack,eps_255,n,acc,git
+resnet18_trades_b6,autoattack,8,500,0.458,81f6112
