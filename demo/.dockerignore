@@ -1,0 +1,5 @@
+__pycache__/
+*.pyc
+.DS_Store
+# downloaded inside the image by the Dockerfile; never send the local 171MB
+checkpoints/
