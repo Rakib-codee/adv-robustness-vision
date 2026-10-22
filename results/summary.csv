@@ -1,0 +1,6 @@
+model,clean_acc_n1000,fgsm_eps8,pgd20_eps8,pgd20_eps16,autoattack_eps8_n500,cw_median_l2_n500,acc_at_l2_0.5_n500
+ResNet-18 standard,94.3,13.1,0.0,0.0,0.0,0.20,0.2
+DeiT-Tiny standard,96.0,17.4,0.0,0.0,-,-,-
+ResNet-18 FGSM-AT,84.2,56.6,44.7,11.4,40.4,0.70,54.0
+ResNet-18 PGD-AT,81.0,54.9,50.6,17.9,44.0,0.84,58.8
+ResNet-18 TRADES (beta=6),80.3,55.5,51.7,22.8,45.8,0.82,57.0

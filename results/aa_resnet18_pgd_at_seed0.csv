@@ -1,0 +1,2 @@
+model,attack,eps_255,n,acc,git
+resnet18_pgd_at,autoattack,8,500,0.44,81f6112

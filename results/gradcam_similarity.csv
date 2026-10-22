@@ -1,0 +1,5 @@
+model,eps_255,n,cam_corr,cam_top20_iou,cam_corr_predclass,cam_top20_iou_predclass
+ResNet-18 std,8,500,0.0062,0.0421,0.7681,0.5829
+DeiT-Tiny std,8,500,0.1292,0.172,0.1088,0.1664
+ResNet-18 PGD-AT,8,500,0.947,0.7919,0.9085,0.7471
+ResNet-18 TRADES,8,500,0.9382,0.7777,0.8871,0.7383

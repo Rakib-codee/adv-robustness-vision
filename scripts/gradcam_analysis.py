@@ -25,7 +25,7 @@ p = argparse.ArgumentParser()
 p.add_argument("--models", required=True, help="label=artifact,label=artifact,...")
 p.add_argument("--n", type=int, default=500)
 p.add_argument("--eps", type=int, default=8)
-p.add_argument("--show", default="0,1,2,3", help="indices of images to plot")
+p.add_argument("--show", default="0,3", help="indices of images to plot")
 args = p.parse_args()
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -53,7 +53,7 @@ for label, art in specs:
         for i in show:
             if bi * 100 <= i < (bi + 1) * 100:
                 j = i - bi * 100
-                vis[i] = (x[j].cpu(), c_clean[j].cpu(), x_adv[j].cpu(), c_adv[j].cpu(),
+                vis[i] = (x[j].cpu(), c_clean[j].cpu(), x_adv[j].cpu(), c_adv_fix[j].cpu(),
                           p_clean[j].item(), p_adv[j].item())
     corr, iou = torch.cat(corrs), torch.cat(ious)
     corr_p, iou_p = torch.cat(corrs_p), torch.cat(ious_p)
@@ -67,24 +67,25 @@ for label, art in specs:
 with open("results/gradcam_similarity.csv", "w", newline="") as f:
     w = csv.DictWriter(f, fieldnames=list(rows[0].keys())); w.writeheader(); w.writerows(rows)
 
-# figure: one block per model; columns = clean, CAM, attacked, CAM; rows = images
+# figure: one ROW per model; for each shown image 4 columns = clean, CAM, PGD-attacked, CAM (same class as clean)
 nm, ni = len(specs), len(show)
-fig, axes = plt.subplots(ni, 4 * nm, figsize=(2.0 * 4 * nm, 2.1 * ni))
+fig, axes = plt.subplots(nm, 4 * ni, figsize=(2.1 * 4 * ni, 2.3 * nm), squeeze=False)
+heads = ["clean", "Grad-CAM", f"PGD {args.eps}/255", "Grad-CAM (same class)"]
 for mi, (label, _) in enumerate(specs):
     for r, i in enumerate(show):
         x, c1, xa, c2, p1, p2 = grid[label][i]
         for k, (img, cam) in enumerate([(x, None), (x, c1), (xa, None), (xa, c2)]):
-            ax = axes[r, 4 * mi + k]
-            ax.imshow(img.permute(1, 2, 0).numpy())
+            ax = axes[mi, 4 * r + k]
+            ax.imshow(img.permute(1, 2, 0).numpy(), interpolation="nearest")
             if cam is not None:
-                ax.imshow(cam.numpy(), cmap="jet", alpha=0.5)
+                ax.imshow(cam.numpy(), cmap="jet", alpha=0.5, interpolation="bilinear")
             ax.set_xticks([]); ax.set_yticks([])
-            if r == 0:
-                ax.set_title(["clean", "CAM", f"PGD {args.eps}/255", "CAM"][k], fontsize=8)
+            if mi == 0:
+                ax.set_title(heads[k], fontsize=8)
             if k in (0, 2):
-                ax.set_xlabel(CLASSES[p1 if k == 0 else p2], fontsize=8)
-    axes[0, 4 * mi + 1].text(1.1, 1.35, label, transform=axes[0, 4 * mi + 1].transAxes,
-                             ha="center", fontsize=10, fontweight="bold")
+                ax.set_xlabel("predicted: " + CLASSES[p1 if k == 0 else p2], fontsize=8)
+            if r == 0 and k == 0:
+                ax.set_ylabel(label, fontsize=9, fontweight="bold")
 fig.tight_layout()
-fig.savefig("results/gradcam_grid.png", dpi=200)
+fig.savefig("results/gradcam_grid.png", dpi=220)
 print("saved results/gradcam_grid.png and results/gradcam_similarity.csv")
