@@ -4,13 +4,11 @@ maps change. This is the version deployed on Streamlit Community Cloud.
 
 Run locally:  streamlit run demo/streamlit_app.py
 """
-import io
 from pathlib import Path
 
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
 import streamlit as st
 import torch
 from PIL import Image
@@ -20,15 +18,48 @@ from attack import (CLASSES, MODEL_FILES, available_labels, ensure_checkpoints,
 
 HERE = Path(__file__).parent
 
-st.set_page_config(page_title="Adversarial Robustness Demo", layout="wide")
+st.set_page_config(page_title="Adversarial Robustness Demo",
+                   page_icon="🛡️", layout="wide")
 
-INTRO = """Four ResNet-18 models trained on CIFAR-10: **Standard**, **FGSM-AT**,
-**PGD-AT** and **TRADES**. Pick an image, choose an attack and a perturbation
-size (epsilon, out of 255), and see whether each model's prediction survives.
+HEADER = """
+<div style="background:linear-gradient(100deg,#16213e 0%,#1f3b73 55%,#3a6fc4 100%);
+border-radius:14px;padding:26px 30px;margin-bottom:6px;">
+  <div style="color:#ffffff;font-size:27px;font-weight:800;line-height:1.25;">
+    How robust are vision models?</div>
+  <div style="color:#c9d9f5;font-size:14px;margin-top:6px;">
+    Four ResNet-18 models trained on CIFAR-10 — <b>Standard</b>, <b>FGSM-AT</b>,
+    <b>PGD-AT</b> and <b>TRADES</b>. Pick an image, choose an attack and a
+    perturbation size (&epsilon;, out of 255), and see whether each model's
+    prediction survives.</div>
+</div>
+"""
 
-*Attacks are white-box: they are computed separately against each model. The
-attack pushes the image away from the model's own clean prediction. Images are
-cropped to a square and resized to 32x32.*"""
+FOOTER = """
+<div style="text-align:center;color:#9aa5b1;font-size:12px;margin-top:36px;padding-top:12px;
+border-top:1px solid #e6e9ed;">
+Attacks are white-box and untargeted, computed per model. Images are centre-cropped to a
+square and resized to 32&times;32.<br>
+<a href="https://github.com/Rakib-codee/adv-robustness-vision">GitHub — code, training logs &amp; full evaluation</a>
+</div>
+"""
+
+
+def card_html(row):
+    fooled = row["Result"] == "fooled"
+    badge_bg, badge_fg, badge = ("#fdecea", "#c0392b", "FOOLED") if fooled \
+        else ("#e9f9f0", "#1e8449", "HELD")
+    return f"""
+    <div style="border:1px solid #e3e7ec;border-radius:12px;padding:14px 8px;
+    text-align:center;background:#ffffff;box-shadow:0 1px 4px rgba(20,40,80,.07);">
+      <div style="font-weight:700;font-size:15px;color:#16213e;">{row['Model']}</div>
+      <div style="color:#5c6670;font-size:13px;margin-top:8px;">{row['Clean prediction']}</div>
+      <div style="font-size:16px;color:#aeb8c2;line-height:1.1;">↓</div>
+      <div style="color:#5c6670;font-size:13px;">{row['After attack']}</div>
+      <div style="margin-top:9px;">
+        <span style="background:{badge_bg};color:{badge_fg};padding:3px 12px;
+        border-radius:11px;font-size:11.5px;font-weight:800;letter-spacing:.4px;">{badge}</span>
+      </div>
+    </div>"""
 
 
 def run_attack(image, attack, eps255):
@@ -73,35 +104,47 @@ def run_attack(image, attack, eps255):
 
 
 def main():
-    st.title("How robust are vision models?")
-    st.markdown(INTRO)
+    st.markdown(HEADER, unsafe_allow_html=True)
 
     with st.spinner("Loading model checkpoints (first run downloads ~171 MB from Hugging Face)..."):
         ensure_checkpoints()
-    labels = available_labels()
-    if not labels:
+    if not available_labels():
         st.error("No model checkpoints found in demo/checkpoints/.")
         st.stop()
 
-    tab_demo, tab_results = st.tabs(["Attack demo", "Results"])
+    tab_demo, tab_results = st.tabs(["🎯 Attack demo", "📊 Results"])
 
     with tab_demo:
-        col_ctrl, col_out = st.columns([1, 2])
+        col_ctrl, col_out = st.columns([1, 2.2])
         with col_ctrl:
-            image = st.file_uploader("Input image", type=["png", "jpg", "jpeg"])
-            attack = st.selectbox("Attack", ["FGSM", "PGD-10"], index=1)
-            eps255 = st.slider("Epsilon (x/255)", 0, 16, 8)
-            run = st.button("Run attack", type="primary")
+            st.markdown("**1. Upload an image**")
+            image = st.file_uploader("Input image", type=["png", "jpg", "jpeg"],
+                                     label_visibility="collapsed")
+            st.markdown("**2. Choose the attack**")
+            attack = st.selectbox("Attack", ["FGSM", "PGD-10"], index=1,
+                                  label_visibility="collapsed")
+            st.markdown("**3. Perturbation budget** — ε (x/255)")
+            eps255 = st.slider("Epsilon (x/255)", 0, 16, 8, label_visibility="collapsed")
+            run = st.button("⚔️ Run attack", type="primary", width="stretch")
         with col_out:
             if run:
                 if image is None:
                     st.warning("Upload an image first.")
                 else:
                     img = Image.open(image)
-                    st.caption(f"Input: {img.size[0]}x{img.size[1]} (cropped to square, resized to 32x32)")
-                    with st.spinner("Running attacks on all 4 models (PGD takes ~30s on free hosting)..."):
+                    st.caption(f"Input: {img.size[0]}×{img.size[1]} "
+                               "(cropped to square, resized to 32×32)")
+                    with st.spinner("Running white-box attacks on all 4 models "
+                                    "(PGD takes ~30s on free hosting)..."):
                         fig, rows = run_attack(img, attack, eps255)
-                    st.dataframe(rows, width="stretch", hide_index=True)
+                    fooled = sum(r["Result"] == "fooled" for r in rows)
+                    st.markdown(f"### {fooled}/{len(rows)} models fooled "
+                                f"— {attack}, ε={int(eps255)}/255")
+                    cols = st.columns(len(rows))
+                    for col, row in zip(cols, rows):
+                        col.markdown(card_html(row), unsafe_allow_html=True)
+                    with st.expander("View as table"):
+                        st.dataframe(rows, width="stretch", hide_index=True)
                     st.pyplot(fig)
                     plt.close(fig)
 
@@ -113,6 +156,8 @@ def main():
         fig_path = HERE / "results_fig.png"
         if fig_path.exists():
             st.image(str(fig_path), caption="Accuracy vs epsilon")
+
+    st.markdown(FOOTER, unsafe_allow_html=True)
 
 
 if __name__ == "__main__":
