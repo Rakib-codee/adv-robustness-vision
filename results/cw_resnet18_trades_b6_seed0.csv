@@ -1,0 +1,2 @@
+model,attack,n,clean,fooled_rate,median_l2,acc_at_l2_0_5,git
+resnet18_trades_b6,cw_l2,500,0.802,0.995,0.8223,0.57,2f646aa
