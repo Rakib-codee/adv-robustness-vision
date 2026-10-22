@@ -1,0 +1,6 @@
+source,target,eps_255,n,success_rate,git
+resnet18_std,resnet18_std,8,500,1.0,e693392
+resnet18_std,deit_tiny_std,8,500,0.2935,e693392
+resnet18_std,resnet18_fgsm_at,8,500,0.0165,e693392
+resnet18_std,resnet18_pgd_at,8,500,0.0148,e693392
+resnet18_std,resnet18_trades_b6,8,500,0.0125,e693392
